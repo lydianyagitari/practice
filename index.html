@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>AJAX Giphy Button Review</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Carrois+Gothic+SC" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+</head>
+
+<body id="wholeThing">
+    <!--Instructions for my Gifs-->
+    <div class="jumbotron" id="header">
+        <img id="topImageL" src="https://i.imgur.com/RY8fjZD.gif">
+
+        <img id="topImageC" src="https://i.gifer.com/YsvV.gif">
+
+        <img id="topImageR" src="https://assets.themuse.com/uploaded/attachments/3741.gif?v=4ab57259c6eefcdc1588f93808a1a5fb6dfad16b2b28f25b7d88a91541f991a8">
+
+        <h2>Freeze and Unfreeze GIFS</h2>
+        <h4>Click the buttons to display GIPHYs of animals<br>Click on a GIPHY to pause and play<br>
+	    Search to add more buttons!</h4>
+    </div>
+
+    <!-- IDs for button we put in the array. -->
+
+    <div id="buttonItems"></div>
+
+    <br>
+
+    <!-- The code below is a form that we use to Search for and to add more buttons of animals. -->
+
+    <form>
+
+        <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-4">
+
+                <input type="text" id="animal-input" class="form-control" placeholder="Add your button animal...">
+
+            </div>
+
+            <input id="addAnimalThing" type="submit" class="btn btn-success" value="ADD YOURS TOO!!!">
+
+            <span id="entry" style="color: rgb(100, 89, 89); "></span>
+            <div class="col-md-4"></div>
+        </div>
+
+    </form>
+
+    <!-- This is where the ratings and images will be shown when the user clicks a movie button. -->
+
+    <div id="ratings"></div>
+
+    <!-- Beginning of the script -->
+
+    <script type="text/javascript">
+        // We save our animals in an array by declaring the array variable in the code below
+
+        var topics = ["porcupine", "wildebeast", "tortoise", "zebra", "monkey", "lion", "gazelle", "antelope", "leopard", "rabbit", "elephant"];
+
+        var animalImage = "";
+
+        // This function is used to shows all the buttons at the top of the page.
+
+        function showButtons() {
+
+            $("#buttonItems").empty();
+
+            $("#animal-input").val("");
+
+            //for loop for our animal buttons
+
+            for (var i = 0; i < topics.length; i++) {
+
+                var button = $("<button class='btn btn-primary'>");
+
+                button.addClass("animal");
+
+                button.attr("animal-name", topics[i]);
+
+                button.text(topics[i]);
+
+                $("#buttonItems").append(button);
+
+                $("#buttonItems").append(" ");
+
+            }
+
+        }
+
+        showButtons();
+
+        // When the user clicks "ADD YOURS TOO!!!", the code below executes a function 
+        //The function then adds and updates a new button [array] 
+
+        $("#addAnimalThing").on("click", function(event) {
+
+            $("#entry").empty();
+
+            event.preventDefault();
+
+            var animalInput = $("#animal-input").val().trim();
+
+            var animalTerm = $(this).attr("animal-name");
+
+            // Test area to make sure the user's button has at least 10 giphs for it.
+
+            // If there aren't 10, an error message will be shown and no button will be created.
+
+            var queryURL = "https://api.giphy.com/v1/gifs/search?q=" + animalInput + "&limit=2&api_key=dc6zaTOxFJmzC";
+
+            //This is a function that makes an ajax call
+
+            $.ajax({
+                    url: queryURL,
+                    method: "GET"
+                })
+                .done(function(response) {
+
+                    //if else statements that direct the code to show 10 results of giphys
+
+                    if (response.pagination.total_count >= 10) {
+
+                        topics.push(animalInput);
+
+                        showButtons();
+                    } else if (response.pagination.total_count === 0) {
+
+                        $("#entry").html(" Sorry, there were no results for this.  Please try again.");
+                    } else if (response.pagination.total_count === 1) {
+                        $("#entry").html(" Sorry, there was only 1 result for this.  Please try again.");
+                    } else {
+                        $("#entry").html(" Sorry, there were only " + response.pagination.total_count + " results for this.  Please try again.");
+                    }
+
+                    $("#space-input").val("");
+
+                });
+
+        });
+
+        $(document).on("click", ".animal", display);
+
+        function display() {
+
+            // This is just to clear out any error message,in case there was
+
+            $("#entry").empty();
+
+            var animalTerm = $(this).attr("animal-name");
+
+            // The GIPHY API query. Our query asks for only 10 giphy results to be returned from the API
+
+            var queryURL = "https://api.giphy.com/v1/gifs/search?q=" + animalTerm + "&limit=10&api_key=dc6zaTOxFJmzC";
+
+            //This is a function that makes an ajax call
+
+            $.ajax({
+                    url: queryURL,
+                    method: "GET"
+                })
+                .done(function(response) {
+
+                    // This runs 10 times (limit is 10 in query) to show all the GIPHY pictures from the website's response.
+
+                    for (var j = 0; j < response.data.length; j++) {
+
+                        // Gets the animated gif URL
+
+                        var active = response.data[j].images.fixed_width.url;
+
+                        // Gets the still gif URL
+
+                        var still = response.data[j].images.fixed_width_still.url;
+                        //this response gives us the rating in uppercase of the giphy
+
+                        var rating = "Rating: " + (response.data[j].rating).toUpperCase();
+
+                        // Creates the new img item
+
+                        var animalImage = $("<img>");
+
+                        // CSS text color (maroon) property for giphy ratingto.
+
+                        $("#ratings").css("color", "maroon");
+
+                        // Creates a new div for ratings
+
+                        var ratingDiv = $("<div id='ratingDiv'>" + rating + "</div>");
+                        //css for the rating div. This is to make sure that it conforms to the gif size
+
+                        $(ratingDiv).css({
+                            "text-align": "center",
+                            "font-size": "20px",
+                            "width": "200",
+                            "display": "block"
+                        });
+
+                        animalImage.attr({
+                            "active": active,
+                            "still": still,
+                            "src": still,
+                            "state": "still"
+                        });
+
+                        // created a new div for both rating and the image
+                        var ratingAndImage = $("<div>");
+
+                        $(ratingAndImage).css({
+                            "float": "left"
+                        });
+
+                        $(ratingAndImage).prepend(ratingDiv, animalImage);
+
+                        //adds the rating and image to the page.
+
+                        $("#ratings").prepend(ratingAndImage);
+
+                        // When the user clicks on a picture, this will either start or stop the animation of that picture.
+
+                        $(animalImage).on("click", function(event) {
+
+                            // clears error messages
+
+                            $("#entry").empty();
+
+                            //Declaring a variable named state.  We use the .attr() method
+                            //In this variable we will  store the image's data-state into it. 
+
+                            var state = $(this).attr("data-state");
+
+                            var source = $(this).attr("src");
+
+                            //  Check if the variable state is equal to 'still',
+                            // then update the src attribute of this image to it's data-animate value,
+                            // and update the data-state attribute to 'animate'.
+
+                            if (state === "still") {
+
+                                $(this).attr("src", $(this).attr("active"));
+
+                                $(this).attr("data-state", "active");
+                            }
+                            // If state is equal to 'animate', then update the src attribute of this
+                            // image to it's data-still value and update the data-state attribute to 'still'
+                            else {
+
+                                $(this).attr("src", $(this).attr("still"));
+
+                                $(this).attr("data-state", "still");
+                            }
+
+                        });
+
+                    }
+
+                });
+
+        }
+    </script>
+
+</body>
+
+</html>
